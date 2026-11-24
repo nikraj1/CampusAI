@@ -1,0 +1,57 @@
+# LLM provider registry and tier routing (blueprint 3.4).
+# All providers speak the OpenAI-compatible /chat/completions API, so adding one is a config change.
+# Model identifiers are examples: check each provider's current model list and edit this file.
+# Tier chains can be overridden with env vars: LLM_FAST, LLM_QUALITY, LLM_STRUCTURED
+# (comma-separated "provider/model" entries).
+providers:
+  groq:
+    base_url: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+    privacy: free_tier
+  gemini:
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    api_key_env: GEMINI_API_KEY
+    privacy: free_tier_may_train
+  openrouter:
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    privacy: varies
+  cerebras:
+    base_url: https://api.cerebras.ai/v1
+    api_key_env: CEREBRAS_API_KEY
+    privacy: free_tier
+  openai:
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    privacy: no_training
+  ollama:
+    base_url_env: OLLAMA_BASE_URL
+    base_url: http://localhost:11434/v1
+    api_key_env: null
+    privacy: local
+
+tiers:
+  fast:
+    - groq/openai/gpt-oss-20b
+    - gemini/gemini-2.0-flash
+    - cerebras/llama3.1-8b
+    - ollama/qwen2.5:3b
+  quality:
+    - groq/openai/gpt-oss-120b
+    - gemini/gemini-2.0-flash
+    - openrouter/meta-llama/llama-3.3-70b-instruct:free
+    - openai/gpt-4o-mini
+    - groq/qwen/qwen3.8-27b
+    - ollama/qwen2.5:3b
+  structured:
+    - groq/openai/gpt-oss-120b
+    - gemini/gemini-2.0-flash
+    - openai/gpt-4o-mini
+    - groq/openai/gpt-oss-20b
+    - ollama/qwen2.5:3b
+
+limits:
+  max_context_tokens:
+    fast: 4000
+    quality: 12000
+    structured: 12000

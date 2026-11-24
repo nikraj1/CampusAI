@@ -1,0 +1,48 @@
+server:
+  port: 8080
+  shutdown: graceful
+spring:
+  application:
+    name: campusai-api
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/campusai}
+    username: ${DB_USER:campusai}
+    password: ${DB_PASSWORD:campusai}
+  flyway:
+    schemas: app,ai,public
+    default-schema: app
+    create-schemas: true
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
+  mvc:
+    async:
+      request-timeout: 300000
+  jackson:
+    default-property-inclusion: always
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+campusai:
+  jwt-secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789abcdef}
+  access-ttl-minutes: 15
+  refresh-ttl-days: 7
+  ai-service-url: ${AI_SERVICE_URL:http://localhost:8000}
+  ai-service-jwt-secret: ${AI_SERVICE_JWT_SECRET:dev-only-service-secret-change-me-0123456789abcdef}
+  file-storage-dir: ${FILE_STORAGE_DIR:./data/files}
+  cookie-secure: ${COOKIE_SECURE:false}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost}
+  storage-quota-bytes: 314572800
+logging:
+  level:
+    root: INFO

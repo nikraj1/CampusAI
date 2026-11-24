@@ -1,0 +1,74 @@
+# CampusAI stack.  `docker compose -f infra/docker-compose.yml up -d db`  starts only Postgres (dev mode).
+# `docker compose -f infra/docker-compose.yml --env-file .env up -d --build` starts everything.
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: campusai
+      POSTGRES_USER: campusai
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-campusai}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusai -d campusai"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ../services/api
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/campusai
+      DB_USER: campusai
+      DB_PASSWORD: ${DB_PASSWORD:-campusai}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      AI_SERVICE_JWT_SECRET: ${AI_SERVICE_JWT_SECRET:?set AI_SERVICE_JWT_SECRET in .env}
+      AI_SERVICE_URL: http://ai:8000
+      FILE_STORAGE_DIR: /data/files
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+    volumes:
+      - files:/data/files
+
+  ai:
+    build: ../services/ai
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: ../.env
+    environment:
+      DB_DSN: postgresql://campusai:${DB_PASSWORD:-campusai}@db:5432/campusai
+      WORKER_EMBEDDED: "false"
+      FILE_STORAGE_DIR: /data/files
+    volumes:
+      - files:/data/files:ro
+
+  worker:
+    build: ../services/ai
+    restart: unless-stopped
+    command: ["python", "-m", "campusai_ai.worker"]
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: ../.env
+    environment:
+      DB_DSN: postgresql://campusai:${DB_PASSWORD:-campusai}@db:5432/campusai
+      FILE_STORAGE_DIR: /data/files
+    volumes:
+      - files:/data/files:ro
+
+  web:
+    build: ../apps/web
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
+  files:
