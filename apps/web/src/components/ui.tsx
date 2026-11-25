@@ -300,7 +300,7 @@ export function ScoreGauge({ value, label, size = 100 }: { value: number | null 
     <div className="flex flex-col items-center">
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         <svg width={size} height={size} role="img" aria-label={`${label}: ${value ?? 'n/a'}`}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-slate-200 dark:stroke-slate-700/70" strokeWidth="8" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-slate-200 dark:stroke-zinc-800" strokeWidth="8" />
           <circle
             cx={size / 2}
             cy={size / 2}
