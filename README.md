@@ -21,15 +21,20 @@ Browser (React/TS/Tailwind)  ──►  Spring Boot API (:8080)  ──service J
                                       └──────────────►  PostgreSQL 16/17 + pgvector  ◄┘
 ```
 
-* `apps/web` – React 18 + TypeScript + Vite + Tailwind
+* `apps/web` – React 18 + TypeScript + Vite + Tailwind (route-split bundle, Light/Dark/System theme, copyable Markdown code blocks, live SSE chat & Agent Trace)
 * `services/api` – Java 21, Spring Boot 3.3, Spring Security (JWT access token + rotating HttpOnly refresh cookie), Flyway (owns **all** DDL), JDBC
 * `services/ai` – Python 3.11+, FastAPI, asyncpg + pgvector, fastembed (`BAAI/bge-small-en-v1.5`, local), provider-agnostic LLM gateway
-* Background work: Postgres job queue (`FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY`); ingestion jobs run in the Python worker, generation jobs on a virtual-thread executor in Spring.
+* Background work: Postgres job queue (`FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY` + periodic stuck-job reaper); ingestion jobs run in the Python worker, generation jobs on a virtual-thread executor in Spring.
 
 ## Quick start (development)
 
 ### Prerequisites
 Java 21, Maven 3.9+, Node 20+, Python 3.11+, Git, and PostgreSQL 16+ **with the pgvector extension**.
+
+> **Windows one-command start (WSL PostgreSQL):** once `.env`, `services/ai/.venv`, and `apps/web/node_modules` are set up, launch the entire stack with:
+> ```powershell
+> powershell -NoProfile -File scripts/start-dev.ps1
+> ```
 
 1. **Database** (pick one)
    * Docker: `docker compose -f infra/docker-compose.yml --env-file .env up -d db`

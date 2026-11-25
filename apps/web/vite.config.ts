@@ -7,5 +7,17 @@ export default defineConfig({
     port: 5173,
     proxy: { '/api': { target: 'http://localhost:8080', changeOrigin: false } },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          charts: ['recharts'],
+          markdown: ['react-markdown', 'remark-gfm', 'rehype-sanitize'],
+          data: ['@tanstack/react-query', 'zustand', '@microsoft/fetch-event-source'],
+        },
+      },
+    },
+  },
   test: { environment: 'node' },
 })

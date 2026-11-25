@@ -7,12 +7,15 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
 import java.util.stream.Collectors;
@@ -44,9 +47,24 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", msg, false);
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ProblemDetail> missingParam(MissingServletRequestParameterException e) {
+        return problem(HttpStatus.BAD_REQUEST, "MISSING_PARAMETER", "Missing required parameter: " + e.getParameterName(), false);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> unreadable(HttpMessageNotReadableException e) {
         return problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Malformed request body", false);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ProblemDetail> methodNotAllowed(HttpRequestMethodNotSupportedException e) {
+        return problem(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", e.getMessage(), false);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> notFound(NoResourceFoundException e) {
+        return problem(HttpStatus.NOT_FOUND, "NOT_FOUND", "Endpoint not found", false);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

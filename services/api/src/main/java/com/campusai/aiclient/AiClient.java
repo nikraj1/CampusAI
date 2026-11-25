@@ -88,8 +88,10 @@ public class AiClient {
                     .header("Accept", "text/event-stream").POST(HttpRequest.BodyPublishers.ofString(db.json(body))).build();
             HttpResponse<java.io.InputStream> res = http.send(r, HttpResponse.BodyHandlers.ofInputStream());
             if (res.statusCode() / 100 != 2) {
-                String err = new String(res.body().readAllBytes(), StandardCharsets.UTF_8);
-                throw mapError(res.statusCode(), err);
+                try (java.io.InputStream errStream = res.body()) {
+                    String err = new String(errStream.readAllBytes(), StandardCharsets.UTF_8);
+                    throw mapError(res.statusCode(), err);
+                }
             }
             try (BufferedReader br = new BufferedReader(new InputStreamReader(res.body(), StandardCharsets.UTF_8))) {
                 String event = "message";

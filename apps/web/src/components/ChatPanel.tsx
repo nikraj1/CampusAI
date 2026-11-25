@@ -120,11 +120,13 @@ export function ChatPanel({ module, scope = {}, conversationId, onConversation, 
       }, ctrl.signal)
       patch((m) => (m.status === 'STREAMING' ? { ...m, status: 'INCOMPLETE', statusLine: undefined } : m))
       qc.invalidateQueries({ queryKey: ['conversations'] })
+      // sync persisted database IDs onto the newly streamed messages so feedback works directly
       api.get(`/conversations/${id}/messages?limit=100`).then((rows: any[]) => {
-        setMessages((cur) => cur.map((m) => {
-          void rows.filter((r) => r.role === m.role)
-          return m
-        }))
+        const persistedAsst = rows.filter((r) => r.role === 'ASSISTANT')
+        const latestAsst = persistedAsst[persistedAsst.length - 1]
+        if (latestAsst?.id) {
+          setMessages((cur) => cur.map((m) => (m.id === asstId ? { ...m, id: latestAsst.id } : m)))
+        }
       }).catch(() => undefined)
     } catch (e: any) {
       patch((m) => ({ ...m, status: 'ERROR', statusLine: undefined, error: e?.message ?? 'Failed to send message' }))
@@ -136,12 +138,16 @@ export function ChatPanel({ module, scope = {}, conversationId, onConversation, 
 
   async function feedback(m: ChatMsg, rating: 1 | -1) {
     if (!convId) return
-    const rows: any[] = await api.get(`/conversations/${convId}/messages?limit=100`)
-    const idx = messages.filter((x) => x.role === 'ASSISTANT').findIndex((x) => x.id === m.id)
-    const target = rows.filter((r) => r.role === 'ASSISTANT')[idx]
-    if (!target) return
-    await api.post(`/conversations/${convId}/messages/${target.id}/feedback`, { rating })
-    setMessages((ms) => ms.map((x) => (x.id === m.id ? { ...x, feedback: rating } : x)))
+    let targetId = m.id
+    if (/^[au]\d+$/.test(targetId)) {
+      const rows: any[] = await api.get(`/conversations/${convId}/messages?limit=100`)
+      const idx = messages.filter((x) => x.role === 'ASSISTANT').findIndex((x) => x.id === m.id)
+      const target = rows.filter((r) => r.role === 'ASSISTANT')[idx]
+      if (!target) return
+      targetId = target.id
+    }
+    await api.post(`/conversations/${convId}/messages/${targetId}/feedback`, { rating })
+    setMessages((ms) => ms.map((x) => (x.id === m.id ? { ...x, id: targetId, feedback: rating } : x)))
   }
 
   return (

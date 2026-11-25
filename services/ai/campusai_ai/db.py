@@ -1,6 +1,7 @@
 """Async Postgres access. Every query that touches ai.* tables takes an explicit user_id (blueprint 11.3)."""
 from __future__ import annotations
 
+import asyncio
 import json
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
@@ -11,6 +12,7 @@ from pgvector.asyncpg import register_vector
 from .config import get_settings
 
 _pool: asyncpg.Pool | None = None
+_pool_lock: asyncio.Lock | None = None
 
 
 async def _init(conn: asyncpg.Connection) -> None:
@@ -20,17 +22,30 @@ async def _init(conn: asyncpg.Connection) -> None:
 
 
 async def get_pool() -> asyncpg.Pool:
-    global _pool
-    if _pool is None:
-        _pool = await asyncpg.create_pool(get_settings().db_dsn, min_size=1, max_size=10, init=_init)
+    global _pool, _pool_lock
+    if _pool is not None:
+        return _pool
+    if _pool_lock is None:
+        _pool_lock = asyncio.Lock()
+    async with _pool_lock:
+        if _pool is None:
+            _pool = await asyncpg.create_pool(
+                get_settings().db_dsn,
+                min_size=1,
+                max_size=10,
+                command_timeout=60,
+                max_inactive_connection_lifetime=300,
+                init=_init,
+            )
     return _pool
 
 
 async def close_pool() -> None:
-    global _pool
+    global _pool, _pool_lock
     if _pool is not None:
         await _pool.close()
         _pool = None
+    _pool_lock = None
 
 
 async def fetch(sql: str, *args: Any) -> list[asyncpg.Record]:
