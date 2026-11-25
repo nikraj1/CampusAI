@@ -108,7 +108,7 @@ Pragmatic deviations from the blueprint (kept small to ship a complete, tested s
 apps/web            React SPA
 services/api        Spring Boot (Flyway migrations in src/main/resources/db/migration)
 services/ai         FastAPI AI service + ingestion worker + tests
-infra               docker-compose, Caddy, helper scripts
+infrastructure      docker-compose, Caddy, helper scripts
 scripts             end-to-end smoke test
 docs                BLUEPRINT.md (architecture & plan)
 ```
