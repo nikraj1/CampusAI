@@ -14,11 +14,11 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
   return (
     <button
       onClick={() => { setTheme(next); setT(next) }}
-      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98] ${className}`}
       aria-label={`Theme: ${labels[t]}. Switch to ${labels[next]}`}
       title={`Theme: ${labels[t]} (click for ${labels[next]})`}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-3.5 w-3.5 text-indigo-500" />
       <span className="hidden sm:inline">{labels[t]}</span>
     </button>
   )
